@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat Room</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+  </head>
+  <body>
+    <div id="login-container">
+      <h2>Enter Chat Room</h2>
+      <input type="text" id="username" placeholder="Enter your name" />
+      <button onclick="joinChat()">Join</button>
+    </div>
+
+    <div id="chat-container" style="display: none">
+      <h2>Welcome, <span id="display-username"></span>!</h2>
+      <ul id="chat-messages"></ul>
+      <input type="text" id="message" placeholder="Type a message..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+      var socket = io();
+      let username = "";
+
+      function joinChat() {
+        username = document.getElementById("username").value;
+        if (username.trim() === "") {
+          alert("Please enter your name.");
+          return;
+        }
+        socket.emit("user_join", { username: username });
+
+        // Hide login and show chat
+        document.getElementById("login-container").style.display = "none";
+        document.getElementById("chat-container").style.display = "block";
+        document.getElementById("display-username").innerText = username;
+      }
+
+      function sendMessage() {
+        let message = document.getElementById("message").value;
+        if (message.trim() === "") return;
+        socket.emit("new_message", { username: username, text: message });
+        document.getElementById("message").value = "";
+      }
+
+      // Add event listener to send message when "Enter" is pressed
+      document
+        .getElementById("message")
+        .addEventListener("keyup", function (event) {
+          if (event.key === "Enter") {
+            sendMessage();
+          }
+        });
+
+      // Receive and display messages in chat
+      socket.on("chat", function (data) {
+        let ul = document.getElementById("chat-messages");
+        let li = document.createElement("li");
+        li.appendChild(
+          document.createTextNode(`${data.username}: ${data.message}`)
+        );
+        ul.appendChild(li);
+        ul.scrollTop = ul.scrollHeight; // Auto-scroll to the latest message
+      });
+    </script>
+  </body>
+</html>
